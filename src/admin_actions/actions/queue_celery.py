@@ -38,7 +38,9 @@ class QueueCeleryAction:
     Condition: TypeAlias = Callable[[type], bool]  # Condition to enable the action
     Task: TypeAlias = FunctionType  # Celery task to be called
 
-    def __call__(self, modeladmin: ModelAdmin, request: HttpRequest, queryset: QuerySet) -> None:
+    def __call__(
+        self, modeladmin: ModelAdmin, request: HttpRequest, queryset: QuerySet
+    ) -> None:
         """Admin action to queue task for selected records."""
         _count: int = 0
 
@@ -59,7 +61,9 @@ class QueueCeleryAction:
                 messages.SUCCESS,
             )
 
-    def __init__(self, *, task: Task, condition: Condition | None = None, name: str | None = None) -> None:
+    def __init__(
+        self, *, task: Task, condition: Condition | None = None, name: str | None = None
+    ) -> None:
         """Initializes the action with optional condition and task."""
 
         self.name = name
@@ -78,7 +82,7 @@ class QueueCeleryAction:
         if not isinstance(
             task, (celery.Task,)
         ):  # Currently only Celery tasks are supported
-            raise TypeError(f"The task must be a Celery task., got {type(task)}")
+            raise TypeError(f"The task must be a Celery task. Got {type(task)}")
 
         self.task = task
 
@@ -87,4 +91,4 @@ class QueueCeleryAction:
         """Returns the name of the action."""
         if self.name:
             return self.name
-        return self.task.__name__
+        return self.task.name
