@@ -105,3 +105,9 @@ def test_noncallable_condition_raises(celery_task):
     """Providing a non-callable condition should raise an error."""
     with pytest.raises(TypeError):
         QueueCeleryAction(task=celery_task, condition="not_a_function")  # pyright: ignore[reportArgumentType]
+
+
+def test_noncallable_task_raises():
+    """Providing a non-callable task should raise an error."""
+    with pytest.raises(TypeError):
+        QueueCeleryAction(task="not_a_function")  # pyright: ignore[reportArgumentType]
