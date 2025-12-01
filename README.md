@@ -9,7 +9,7 @@ and organization.
 
 ## Installation
 
-To install `django_admin_actions`, you'll use `pip install django-admin-actions`
+To install `django-admin-actions`, you'll use `pip install django-admin-actions`
 or add `django-admin-actions` to your `pyproject.toml` or `requirements.txt`.
 You don't need to add anything to your `INSTALLED_APPS`.
 
@@ -22,9 +22,11 @@ from django.contrib import admin
 
 from admin_actions.actions import SimpleAction
 
+
 def my_admin_function(item_pk):
     # Your admin action logic here
     pass
+
 
 class MyAdmin(admin.ModelAdmin):
     actions = [
@@ -69,5 +71,7 @@ Once you have everything working, follow these steps to submit your changes:
    All tests must pass, of course. Try to cover your new code as much as
    possible. Tests should cover all branches.
 4. Commit your changes, passing all checks.
-5. Push to the branch.
-6. Create a pull request.
+5. Update the changelog with [`git-cliff`](https://github.com/orhun/git-cliff).
+6. Make sure the documentation is up to date and correct.
+7. Push to the branch.
+8. Create a pull request.
