@@ -16,7 +16,8 @@ type Function = Callable[[Any], None]
 
 
 class AdminActionBaseClass(abc.ABC):
-    """Generates an admin action for calling a function for a chosen set of records.
+    """
+    Generates an admin action for calling a function for a chosen set of records.
 
     Yes, it's basically an abstracted ``map``.
 
@@ -24,28 +25,37 @@ class AdminActionBaseClass(abc.ABC):
 
         class MyAdminAction(AdminActionBaseClass):
             def handle_item(self, item):
-                self.funtion(item)
+                self.function(item)
                 print(f"{item.pk} has been handled.")
 
+        # Example 1: Using only name (auto-generated short_description)
         conditional_action = MyAdminAction(
             function=my_function,
             condition=lambda record: record.should_process(),
-            name="process_records")
+            name="process_records",
+        )
 
-        def my_function(record_id):
-            record = MyModel.objects.get(pk=record_id)
-            ...
+        # Example 2: Explicitly overriding short_description (recommended Django-style)
+        custom_label_action = MyAdminAction(
+            function=my_function,
+            name="bulk_process",
+            short_description="Process Selected Records",
+        )
+
+        def my_function(record):
+            ...  # perform work on a single model instance
 
         class MyModelAdmin(admin.ModelAdmin):
-            actions = [conditional_action]
+            actions = [conditional_action, custom_label_action]
             model = MyModel
 
-    :param function: Required. Should be a callable that takes a single model instance as an argument.
-    :param condition: Optional. If provided, it should be a callable that takes a model
-        instance and returns a Boolean indicating whether to queue the task for that record.
-    :param name: Optional. If provided, it will be used as the action's name in the admin
-        interface. If it is omitted, the function name will be used instead.
+    :param function: Required. Callable that takes a single model instance.
+    :param condition: Optional callable returning True/False for each record.
+    :param name: Optional internal identifier used as ``__name__``. If omitted, function.__name__ is used.
+    :param short_description: Optional human-readable label shown in the Django admin dropdown.
+        If omitted, defaults to ``name.replace("_", " ")``.
     """
+
 
     @abc.abstractmethod
     def handle_item(self, item):
@@ -99,32 +109,44 @@ class AdminActionBaseClass(abc.ABC):
                 messages.SUCCESS,
             )
 
+    
     def __init__(
         self,
         function: Function,
         *,
         condition: Condition | None = None,
         name: str | None = None,
+        short_description: str | None = None,
     ) -> None:
-        """Initializes the action with a function and an optional condition.
+        """
+        Initializes the action with a function and an optional condition.
 
-        :param function: Required. Should be a callable that takes a single model instance.
-        :param condition: Optional. If provided, it should be a callable that takes a model instance and returns a
-            Boolean indicating whether to queue the task for that record.
-        :param name: Optional. If provided, will be used as the action's name in the admin interface.
+        :param function: Callable that takes a model instance.
+        :param condition: Optional callable for whether to process each record.
+        :param name: Optional internal identifier used by Django admin.
+        :param short_description: Optional user-facing label shown in the Django admin dropdown.
         """
 
         if condition is not None:
-            if isinstance(condition, Callable):  # Cannot call a non-callable condition
+            if isinstance(condition, Callable):
                 self.condition = condition
             else:
                 raise TypeError("The condition must be a callable.")
         else:
-            self.condition = lambda _: True  # The default condition always returns True
+            self.condition = lambda _: True
 
-        if not callable(function):  # Cannot call a non-callable task
+        if not callable(function):
             raise TypeError("The function must be a callable.")
 
-        self.name = name
         self.function = function
-        self.__name__ = name if name else function.__name__
+
+        # Internal action identifier
+        self.name = name or function.__name__          
+        self.__name__ = self.name                      
+
+        # Human-readable label for admin dropdown
+        if short_description is not None:
+            self.short_description = short_description
+        else:
+            # Fallback consistent with Django conventions
+            self.short_description = self.name.replace("_", " ")
